@@ -1,6 +1,9 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import type React from "react"
+
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import {
   LogOut,
   Settings,
@@ -19,56 +22,100 @@ import {
   Upload,
   FileText,
   CheckCircle,
-} from "lucide-react";
-import { BackgroundBeams } from "@/components/ui/background-beams";
-import Link from "next/link";
+} from "lucide-react"
+import { BackgroundBeams } from "@/components/ui/background-beams"
+
+// Define types for user data
+interface UserData {
+  id: string
+  email: string
+  name: string
+  role: string
+  avatar: string | null
+  createdAt: string
+}
 
 // Define types for DashboardCard props
 interface DashboardCardProps {
-  title: string;
-  value: string;
-  icon: React.ReactNode;
-  trend?: string;
-  trendUp?: boolean;
+  title: string
+  value: string
+  icon: React.ReactNode
+  trend?: string
+  trendUp?: boolean
 }
 
 // Define types for SidebarButton props
 interface SidebarButtonProps {
-  icon: React.ReactNode;
-  text: string;
-  onClick: () => void;
-  className?: string;
-  isActive?: boolean;
+  icon: React.ReactNode
+  text: string
+  onClick: () => void
+  className?: string
+  isActive?: boolean
 }
 
 export default function Home() {
-  const [darkMode, setDarkMode] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeSection, setActiveSection] = useState("dashboard");
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isUploading, setIsUploading] = useState(false);
+  const [darkMode, setDarkMode] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [activeSection, setActiveSection] = useState("dashboard")
+  const [showUploadModal, setShowUploadModal] = useState(false)
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [isUploading, setIsUploading] = useState(false)
+  const [userData, setUserData] = useState<UserData | null>(null)
+  const router = useRouter()
+
+  // Check authentication on component mount
+  useEffect(() => {
+    const storedUserData = localStorage.getItem("userData")
+
+    if (!storedUserData) {
+      // Redirect to login if no user data found
+      router.push("/auth/login")
+      return
+    }
+
+    try {
+      const parsedUserData = JSON.parse(storedUserData) as UserData
+      setUserData(parsedUserData)
+
+      // If user came from login, show profile section first
+      const fromLogin = sessionStorage.getItem("fromLogin")
+      if (fromLogin === "true") {
+        setActiveSection("profile")
+        sessionStorage.removeItem("fromLogin")
+      }
+    } catch (error) {
+      console.error("Error parsing user data:", error)
+      localStorage.removeItem("userData")
+      router.push("/auth/login")
+    }
+  }, [router])
+
+  // Handle logout
+  const handleLogout = () => {
+    localStorage.removeItem("userData")
+    router.push("/auth/login")
+  }
 
   // Mock function to simulate file upload
   const handleUpload = () => {
-    if (!uploadFile) return;
+    if (!uploadFile) return
 
-    setIsUploading(true);
-    setUploadProgress(0);
+    setIsUploading(true)
+    setUploadProgress(0)
 
     // Simulate upload progress
     const interval = setInterval(() => {
       setUploadProgress((prev) => {
         if (prev >= 100) {
-          clearInterval(interval);
-          setIsUploading(false);
-          return 100;
+          clearInterval(interval)
+          setIsUploading(false)
+          return 100
         }
-        return prev + 10;
-      });
-    }, 300);
-  };
+        return prev + 10
+      })
+    }, 300)
+  }
 
   // Content for different sections
   const renderContent = () => {
@@ -117,9 +164,7 @@ export default function Home() {
                         </div>
                         <div>
                           <p className="font-medium">Package-{item} updated</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            2 hours ago
-                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">2 hours ago</p>
                         </div>
                       </div>
                       <span className="px-2 py-1 text-xs rounded-full border border-gray-200 dark:border-gray-700">
@@ -150,7 +195,7 @@ export default function Home() {
               </div>
             </div>
           </>
-        );
+        )
       case "packages":
         return (
           <div className="space-y-6">
@@ -176,28 +221,21 @@ export default function Home() {
                     </div>
                     <div>
                       <p className="font-medium">Package-{item}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        v1.{item}.0
-                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">v1.{item}.0</p>
                     </div>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                    A sample package description that explains what this package
-                    does and how it can be used.
+                    A sample package description that explains what this package does and how it can be used.
                   </p>
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      Updated 2 days ago
-                    </span>
-                    <button className="text-blue-500 hover:text-blue-600 text-sm">
-                      View Details
-                    </button>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Updated 2 days ago</span>
+                    <button className="text-blue-500 hover:text-blue-600 text-sm">View Details</button>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-        );
+        )
       case "analytics":
         return (
           <div className="space-y-6">
@@ -230,41 +268,18 @@ export default function Home() {
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
               <h3 className="font-medium mb-4">Monthly Downloads</h3>
               <div className="h-64 flex items-end space-x-2">
-                {[35, 45, 30, 65, 85, 75, 60, 80, 95, 70, 55, 65].map(
-                  (height, index) => (
-                    <div
-                      key={index}
-                      className="flex-1 flex flex-col items-center"
-                    >
-                      <div
-                        className="w-full bg-blue-500 rounded-t-sm"
-                        style={{ height: `${height}%` }}
-                      ></div>
-                      <span className="text-xs mt-1">
-                        {
-                          [
-                            "Jan",
-                            "Feb",
-                            "Mar",
-                            "Apr",
-                            "May",
-                            "Jun",
-                            "Jul",
-                            "Aug",
-                            "Sep",
-                            "Oct",
-                            "Nov",
-                            "Dec",
-                          ][index]
-                        }
-                      </span>
-                    </div>
-                  )
-                )}
+                {[35, 45, 30, 65, 85, 75, 60, 80, 95, 70, 55, 65].map((height, index) => (
+                  <div key={index} className="flex-1 flex flex-col items-center">
+                    <div className="w-full bg-blue-500 rounded-t-sm" style={{ height: `${height}%` }}></div>
+                    <span className="text-xs mt-1">
+                      {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][index]}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-        );
+        )
       case "profile":
         return (
           <div className="space-y-6">
@@ -274,47 +289,49 @@ export default function Home() {
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="flex flex-col items-center">
                   <div className="h-24 w-24 rounded-full bg-blue-500 flex items-center justify-center text-white text-2xl font-bold mb-2">
-                    JD
+                    {userData?.name.substring(0, 2).toUpperCase() || "U"}
                   </div>
-                  <h3 className="font-medium">John Doe</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Developer
-                  </p>
+                  <h3 className="font-medium">{userData?.name || "User"}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{userData?.role || "User"}</p>
                 </div>
 
                 <div className="flex-1 space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Email
-                    </label>
+                    <label className="block text-sm font-medium mb-1">Email</label>
                     <input
                       type="email"
-                      value="john.doe@example.com"
+                      value={userData?.email || ""}
                       className="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
                       readOnly
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Full Name
-                    </label>
+                    <label className="block text-sm font-medium mb-1">Full Name</label>
                     <input
                       type="text"
-                      value="John Doe"
+                      defaultValue={userData?.name || ""}
                       className="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Bio
-                    </label>
+                    <label className="block text-sm font-medium mb-1">Bio</label>
                     <textarea
                       className="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
                       rows={3}
-                      defaultValue="Software developer with 5 years of experience in web development."
+                      defaultValue={`${userData?.role || "Developer"} with a passion for building great software.`}
                     ></textarea>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Member Since</label>
+                    <input
+                      type="text"
+                      value={userData ? new Date(userData.createdAt).toLocaleDateString() : ""}
+                      className="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+                      readOnly
+                    />
                   </div>
 
                   <button className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md">
@@ -328,9 +345,7 @@ export default function Home() {
               <h3 className="font-medium mb-4">Change Password</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Current Password
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Current Password</label>
                   <input
                     type="password"
                     className="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
@@ -338,9 +353,7 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    New Password
-                  </label>
+                  <label className="block text-sm font-medium mb-1">New Password</label>
                   <input
                     type="password"
                     className="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
@@ -348,9 +361,7 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Confirm New Password
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Confirm New Password</label>
                   <input
                     type="password"
                     className="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
@@ -363,7 +374,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-        );
+        )
       case "settings":
         return (
           <div className="space-y-6">
@@ -374,19 +385,13 @@ export default function Home() {
               <div className="flex items-center justify-between py-2">
                 <div>
                   <p className="font-medium">Dark Mode</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Toggle between light and dark themes
-                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Toggle between light and dark themes</p>
                 </div>
                 <button
                   onClick={() => setDarkMode(!darkMode)}
                   className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
-                  {darkMode ? (
-                    <Sun className="h-5 w-5" />
-                  ) : (
-                    <Moon className="h-5 w-5" />
-                  )}
+                  {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </button>
               </div>
             </div>
@@ -397,16 +402,10 @@ export default function Home() {
                 <div className="flex items-center justify-between py-2">
                   <div>
                     <p className="font-medium">Email Notifications</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Receive email updates about your account
-                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Receive email updates about your account</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      defaultChecked
-                    />
+                    <input type="checkbox" className="sr-only peer" defaultChecked />
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
@@ -436,18 +435,28 @@ export default function Home() {
                       Permanently delete your account and all data
                     </p>
                   </div>
-                  <button className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md">
-                    Delete
-                  </button>
+                  <button className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md">Delete</button>
                 </div>
               </div>
             </div>
           </div>
-        );
+        )
       default:
-        return <div>Select a section from the sidebar</div>;
+        return <div>Select a section from the sidebar</div>
     }
-  };
+  }
+
+  // If user data is still loading, show a loading state
+  if (!userData) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+          <p className="mt-2">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={darkMode ? "dark" : ""}>
@@ -506,14 +515,7 @@ export default function Home() {
               isActive={activeSection === "settings"}
               onClick={() => setActiveSection("settings")}
             />
-            <Link href="/auth/login" className="mt-auto">
-              <SidebarButton
-                icon={<LogOut />}
-                text="Logout"
-                className="text-red-500"
-                onClick={() => {}}
-              />
-            </Link>
+            <SidebarButton icon={<LogOut />} text="Logout" className="text-red-500 mt-auto" onClick={handleLogout} />
           </nav>
         </aside>
 
@@ -540,7 +542,7 @@ export default function Home() {
                   <line x1="9" x2="9" y1="3" y2="21" />
                 </svg>
               </button>
-              <h1 className="text-2xl font-bold">Welcome to ChainPack</h1>
+              <h1 className="text-2xl font-bold">Welcome, {userData.name}</h1>
             </div>
 
             <div className="flex items-center gap-4">
@@ -552,18 +554,14 @@ export default function Home() {
                 className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
                 onClick={() => setDarkMode(!darkMode)}
               >
-                {darkMode ? (
-                  <Sun className="h-5 w-5" />
-                ) : (
-                  <Moon className="h-5 w-5" />
-                )}
+                {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </button>
 
               <div
                 className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white cursor-pointer"
                 onClick={() => setActiveSection("profile")}
               >
-                <User className="h-4 w-4" />
+                {userData.name.substring(0, 1).toUpperCase()}
               </div>
             </div>
           </header>
@@ -589,10 +587,10 @@ export default function Home() {
             <button
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               onClick={() => {
-                setShowUploadModal(false);
-                setUploadFile(null);
-                setUploadProgress(0);
-                setIsUploading(false);
+                setShowUploadModal(false)
+                setUploadFile(null)
+                setUploadProgress(0)
+                setIsUploading(false)
               }}
             >
               <X className="h-5 w-5" />
@@ -604,16 +602,14 @@ export default function Home() {
               <div className="text-center py-6">
                 <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
                 <p className="text-lg font-medium">Upload Complete!</p>
-                <p className="text-gray-500 dark:text-gray-400 mb-6">
-                  Your package has been uploaded successfully.
-                </p>
+                <p className="text-gray-500 dark:text-gray-400 mb-6">Your package has been uploaded successfully.</p>
                 <button
                   className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md"
                   onClick={() => {
-                    setShowUploadModal(false);
-                    setUploadFile(null);
-                    setUploadProgress(0);
-                    setIsUploading(false);
+                    setShowUploadModal(false)
+                    setUploadFile(null)
+                    setUploadProgress(0)
+                    setIsUploading(false)
                   }}
                 >
                   Close
@@ -623,9 +619,7 @@ export default function Home() {
               <>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Package Name
-                    </label>
+                    <label className="block text-sm font-medium mb-1">Package Name</label>
                     <input
                       type="text"
                       className="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
@@ -634,9 +628,7 @@ export default function Home() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Version
-                    </label>
+                    <label className="block text-sm font-medium mb-1">Version</label>
                     <input
                       type="text"
                       className="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
@@ -645,9 +637,7 @@ export default function Home() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Description
-                    </label>
+                    <label className="block text-sm font-medium mb-1">Description</label>
                     <textarea
                       className="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
                       rows={3}
@@ -656,18 +646,13 @@ export default function Home() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Package File
-                    </label>
+                    <label className="block text-sm font-medium mb-1">Package File</label>
                     <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-md p-4 text-center">
                       {uploadFile ? (
                         <div className="flex items-center gap-2">
                           <FileText className="h-5 w-5 text-blue-500" />
                           <span>{uploadFile.name}</span>
-                          <button
-                            className="ml-auto text-red-500"
-                            onClick={() => setUploadFile(null)}
-                          >
+                          <button className="ml-auto text-red-500" onClick={() => setUploadFile(null)}>
                             <X className="h-4 w-4" />
                           </button>
                         </div>
@@ -681,10 +666,7 @@ export default function Home() {
                               <input
                                 type="file"
                                 className="hidden"
-                                onChange={(e) =>
-                                  e.target.files &&
-                                  setUploadFile(e.target.files[0])
-                                }
+                                onChange={(e) => e.target.files && setUploadFile(e.target.files[0])}
                               />
                             </label>
                           </p>
@@ -700,10 +682,7 @@ export default function Home() {
                         <span>{uploadProgress}%</span>
                       </div>
                       <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                        <div
-                          className="bg-blue-500 h-2 rounded-full"
-                          style={{ width: `${uploadProgress}%` }}
-                        ></div>
+                        <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
                       </div>
                     </div>
                   )}
@@ -730,58 +709,39 @@ export default function Home() {
         </div>
       )}
     </div>
-  );
+  )
 }
 
 // Sidebar Button Component
-const SidebarButton: React.FC<SidebarButtonProps> = ({
-  icon,
-  text,
-  onClick,
-  className = "",
-  isActive = false,
-}) => (
+const SidebarButton: React.FC<SidebarButtonProps> = ({ icon, text, onClick, className = "", isActive = false }) => (
   <button
     className={`flex items-center gap-3 p-3 rounded-lg ${
-      isActive
-        ? "bg-gray-100 dark:bg-gray-700"
-        : "hover:bg-gray-100 dark:hover:bg-gray-700"
+      isActive ? "bg-gray-100 dark:bg-gray-700" : "hover:bg-gray-100 dark:hover:bg-gray-700"
     } ${className}`}
     onClick={onClick}
   >
     {icon}
     <span>{text}</span>
   </button>
-);
+)
 
 // Dashboard Card Component
-const DashboardCard: React.FC<DashboardCardProps> = ({
-  title,
-  value,
-  icon,
-  trend,
-  trendUp,
-}) => (
+const DashboardCard: React.FC<DashboardCardProps> = ({ title, value, icon, trend, trendUp }) => (
   <div className="backdrop-blur-sm bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
     <div className="p-4 pb-2">
       <div className="flex justify-between items-center">
         <h3 className="text-base font-medium">{title}</h3>
-        <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
-          {icon}
-        </div>
+        <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">{icon}</div>
       </div>
     </div>
     <div className="px-4 pb-4">
       <p className="text-3xl font-bold">{value}</p>
       {trend && (
-        <p
-          className={`text-sm mt-1 ${
-            trendUp ? "text-green-500" : "text-red-500"
-          } flex items-center gap-1`}
-        >
+        <p className={`text-sm mt-1 ${trendUp ? "text-green-500" : "text-red-500"} flex items-center gap-1`}>
           {trendUp ? "↑" : "↓"} {trend}
         </p>
       )}
     </div>
   </div>
-);
+)
+
